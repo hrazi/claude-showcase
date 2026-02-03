@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { randomUUID } from 'crypto';
 import { getContainers } from '../../lib/cosmos';
 import { getUser } from '../../lib/auth';
-import { v4 as uuidv4 } from 'uuid';
 
 // POST /api/items/{id}/vote - Cast or change vote
 app.http('castVote', {
@@ -70,7 +70,7 @@ app.http('castVote', {
         }
 
         await votesContainer.items.create({
-          id: uuidv4(),
+          id: randomUUID(),
           itemId,
           userId: user.userId,
           vote: body.vote,

@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { randomUUID } from 'crypto';
 import { getContainers } from '../../lib/cosmos';
 import { getUser } from '../../lib/auth';
-import { v4 as uuidv4 } from 'uuid';
 
 // GET /api/items/{id}/comments - List comments for an item
 app.http('getComments', {
@@ -55,7 +55,7 @@ app.http('createComment', {
       }
 
       const comment = {
-        id: uuidv4(),
+        id: randomUUID(),
         itemId,
         userId: user.userId,
         userName: user.userDetails,

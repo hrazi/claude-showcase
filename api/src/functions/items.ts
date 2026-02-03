@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { randomUUID } from 'crypto';
 import { getContainers } from '../../lib/cosmos';
 import { getUser } from '../../lib/auth';
-import { v4 as uuidv4 } from 'uuid';
 
 // GET /api/items - List all items sorted by net votes
 app.http('getItems', {
@@ -63,7 +63,7 @@ app.http('createItem', {
       const { itemsContainer } = await getContainers();
 
       const item = {
-        id: uuidv4(),
+        id: randomUUID(),
         title: body.title.slice(0, 100),
         description: body.description.slice(0, 500),
         link: body.link,
