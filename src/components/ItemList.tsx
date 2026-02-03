@@ -5,11 +5,10 @@ interface ItemListProps {
   items: Item[];
   user: User | null;
   onVoteChange: (itemId: string, upvotes: number, downvotes: number, userVote?: number) => void;
-  onItemDeleted: (itemId: string) => void;
   onCommentCountChange: (itemId: string, commentCount: number) => void;
 }
 
-export function ItemList({ items, user, onVoteChange, onItemDeleted, onCommentCountChange }: ItemListProps) {
+export function ItemList({ items, user, onVoteChange, onCommentCountChange }: ItemListProps) {
   if (items.length === 0) {
     return (
       <div className="empty-state">
@@ -27,7 +26,6 @@ export function ItemList({ items, user, onVoteChange, onItemDeleted, onCommentCo
           item={item}
           user={user}
           onVoteChange={onVoteChange}
-          onItemDeleted={onItemDeleted}
           onCommentCountChange={onCommentCountChange}
         />
       ))}

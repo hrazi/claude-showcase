@@ -7,13 +7,11 @@ interface ItemCardProps {
   item: Item;
   user: User | null;
   onVoteChange: (itemId: string, upvotes: number, downvotes: number, userVote?: number) => void;
-  onItemDeleted: (itemId: string) => void;
   onCommentCountChange: (itemId: string, commentCount: number) => void;
 }
 
-export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCountChange }: ItemCardProps) {
+export function ItemCard({ item, user, onVoteChange, onCommentCountChange }: ItemCardProps) {
   const [showComments, setShowComments] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const handleVote = async (vote: 1 | -1) => {
     if (!user) return;
@@ -49,26 +47,6 @@ export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCou
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    setDeleting(true);
-    try {
-      const response = await fetch(`/api/items/${item.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (response.ok || response.status === 204) {
-        onItemDeleted(item.id);
-      } else {
-        setDeleting(false);
-      }
-    } catch (error) {
-      console.error('Failed to delete:', error);
-      setDeleting(false);
-    }
-  };
-
-  const isAuthor = user && user.userId === item.authorId;
   const formattedDate = new Date(item.createdAt).toLocaleDateString();
 
   return (
@@ -99,17 +77,6 @@ export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCou
               {item.commentCount} comment{item.commentCount !== 1 ? 's' : ''}
             </button>
           </div>
-          {isAuthor && (
-            <div className="item-actions">
-              <button
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          )}
         </div>
       </div>
       {showComments && (

@@ -65,10 +65,6 @@ function App() {
     ).sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)));
   };
 
-  const handleItemDeleted = (itemId: string) => {
-    setItems(items.filter(item => item.id !== itemId));
-  };
-
   const handleCommentCountChange = (itemId: string, commentCount: number) => {
     setItems(items.map(item =>
       item.id === itemId ? { ...item, commentCount } : item
@@ -107,7 +103,6 @@ function App() {
             items={items}
             user={user}
             onVoteChange={handleVoteChange}
-            onItemDeleted={handleItemDeleted}
             onCommentCountChange={handleCommentCountChange}
           />
         )}
