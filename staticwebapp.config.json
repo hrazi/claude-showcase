@@ -29,6 +29,6 @@
     "exclude": ["/api/*", "*.{css,js,png,jpg,gif,ico,svg}"]
   },
   "platform": {
-    "apiRuntime": "node:18"
+    "apiRuntime": "node:20"
   }
 }
