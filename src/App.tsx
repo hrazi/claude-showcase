@@ -13,9 +13,13 @@ function App() {
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('/api/items');
-      const data = await response.json();
-      setItems(data);
+      const response = await fetch('/api/items', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data);
+      }
     } catch (error) {
       console.error('Failed to fetch items:', error);
     } finally {

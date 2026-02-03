@@ -19,9 +19,13 @@ export function CommentSection({ itemId, user, onCommentCountChange }: CommentSe
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/items/${itemId}/comments`);
-      const data = await response.json();
-      setComments(data);
+      const response = await fetch(`/api/items/${itemId}/comments`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data);
+      }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     } finally {
@@ -38,12 +42,15 @@ export function CommentSection({ itemId, user, onCommentCountChange }: CommentSe
       const response = await fetch(`/api/items/${itemId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ text: newComment })
       });
-      const comment = await response.json();
-      setComments([...comments, comment]);
-      setNewComment('');
-      onCommentCountChange(comments.length + 1);
+      if (response.ok) {
+        const comment = await response.json();
+        setComments([...comments, comment]);
+        setNewComment('');
+        onCommentCountChange(comments.length + 1);
+      }
     } catch (error) {
       console.error('Failed to add comment:', error);
     } finally {
@@ -53,9 +60,14 @@ export function CommentSection({ itemId, user, onCommentCountChange }: CommentSe
 
   const handleDelete = async (commentId: string) => {
     try {
-      await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
-      setComments(comments.filter(c => c.id !== commentId));
-      onCommentCountChange(comments.length - 1);
+      const response = await fetch(`/api/comments/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (response.ok || response.status === 204) {
+        setComments(comments.filter(c => c.id !== commentId));
+        onCommentCountChange(comments.length - 1);
+      }
     } catch (error) {
       console.error('Failed to delete comment:', error);
     }

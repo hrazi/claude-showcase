@@ -21,10 +21,13 @@ export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCou
       const response = await fetch(`/api/items/${item.id}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ vote })
       });
-      const data = await response.json();
-      onVoteChange(item.id, data.upvotes, data.downvotes, data.userVote);
+      if (response.ok) {
+        const data = await response.json();
+        onVoteChange(item.id, data.upvotes, data.downvotes, data.userVote);
+      }
     } catch (error) {
       console.error('Failed to vote:', error);
     }
@@ -33,9 +36,14 @@ export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCou
   const handleRemoveVote = async () => {
     if (!user) return;
     try {
-      const response = await fetch(`/api/items/${item.id}/vote`, { method: 'DELETE' });
-      const data = await response.json();
-      onVoteChange(item.id, data.upvotes, data.downvotes, undefined);
+      const response = await fetch(`/api/items/${item.id}/vote`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        onVoteChange(item.id, data.upvotes, data.downvotes, undefined);
+      }
     } catch (error) {
       console.error('Failed to remove vote:', error);
     }
@@ -45,8 +53,15 @@ export function ItemCard({ item, user, onVoteChange, onItemDeleted, onCommentCou
     if (!confirm('Are you sure you want to delete this item?')) return;
     setDeleting(true);
     try {
-      await fetch(`/api/items/${item.id}`, { method: 'DELETE' });
-      onItemDeleted(item.id);
+      const response = await fetch(`/api/items/${item.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (response.ok || response.status === 204) {
+        onItemDeleted(item.id);
+      } else {
+        setDeleting(false);
+      }
     } catch (error) {
       console.error('Failed to delete:', error);
       setDeleting(false);

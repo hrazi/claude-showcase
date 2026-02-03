@@ -30,16 +30,25 @@ export function SubmitForm({ onSubmit, onCancel }: SubmitFormProps) {
       const response = await fetch('/api/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ title, link, description })
       });
 
+      if (response.redirected) {
+        throw new Error('Session expired. Please refresh and sign in again.');
+      }
+
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response from server');
+      }
+
+      const data = JSON.parse(text);
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Failed to create item');
       }
 
-      const item = await response.json();
-      onSubmit(item);
+      onSubmit(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
