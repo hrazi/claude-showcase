@@ -1,16 +1,17 @@
 {
   "name": "claude-showcase-api",
   "version": "1.0.0",
+  "main": "src/functions/*.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w"
   },
   "dependencies": {
     "@azure/cosmos": "^4.0.0",
-    "uuid": "^13.0.0"
+    "@azure/functions": "^4.0.0",
+    "uuid": "^11.0.0"
   },
   "devDependencies": {
-    "@azure/functions": "^4.0.0",
     "@types/node": "^20.0.0",
     "@types/uuid": "^10.0.0",
     "typescript": "^5.0.0"
