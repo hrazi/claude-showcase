@@ -10,18 +10,41 @@ function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [loadingItems, setLoadingItems] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchItems = async () => {
     try {
+      setFetchError(null);
       const response = await fetch('/api/items', {
         credentials: 'include'
       });
-      if (response.ok) {
-        const data = await response.json();
+
+      if (response.redirected) {
+        // User not logged in, that's ok - show empty state
+        setItems([]);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        setFetchError('Empty response from API');
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (!response.ok) {
+        setFetchError(data.error || `API error: ${response.status}`);
+        return;
+      }
+
+      if (Array.isArray(data)) {
         setItems(data);
+      } else {
+        setFetchError('Invalid response format');
       }
     } catch (error) {
       console.error('Failed to fetch items:', error);
+      setFetchError(error instanceof Error ? error.message : 'Failed to load items');
     } finally {
       setLoadingItems(false);
     }
@@ -73,6 +96,12 @@ function App() {
         )}
         {loadingItems ? (
           <div className="loading">Loading items...</div>
+        ) : fetchError ? (
+          <div className="error-state" style={{ padding: '2rem', textAlign: 'center', color: '#d32f2f' }}>
+            <h2>Failed to load items</h2>
+            <p>{fetchError}</p>
+            <button className="btn btn-primary" onClick={fetchItems}>Try Again</button>
+          </div>
         ) : (
           <ItemList
             items={items}

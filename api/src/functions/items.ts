@@ -14,8 +14,11 @@ app.http('getItems', {
       const { itemsContainer, votesContainer } = await getContainers();
 
       const { resources: items } = await itemsContainer.items
-        .query('SELECT * FROM c ORDER BY (c.upvotes - c.downvotes) DESC')
+        .query('SELECT * FROM c')
         .fetchAll();
+
+      // Sort in memory since computed ORDER BY may not be supported
+      items.sort((a: any, b: any) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
 
       // If user is logged in, fetch their votes
       let userVotes: Record<string, number> = {};
