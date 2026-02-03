@@ -1,0 +1,113 @@
+import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { getContainers } from '../../lib/cosmos';
+import { getUser } from '../../lib/auth';
+import { v4 as uuidv4 } from 'uuid';
+
+// GET /api/items/{id}/comments - List comments for an item
+app.http('getComments', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'items/{id}/comments',
+  handler: async (request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> => {
+    const itemId = request.params.id;
+    const { commentsContainer } = await getContainers();
+
+    const { resources: comments } = await commentsContainer.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.itemId = @itemId ORDER BY c.createdAt ASC',
+        parameters: [{ name: '@itemId', value: itemId }]
+      })
+      .fetchAll();
+
+    return { jsonBody: comments };
+  }
+});
+
+// POST /api/items/{id}/comments - Add comment
+app.http('createComment', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'items/{id}/comments',
+  handler: async (request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> => {
+    const user = getUser(request);
+    if (!user) {
+      return { status: 401, jsonBody: { error: 'Unauthorized' } };
+    }
+
+    const itemId = request.params.id;
+    const body = await request.json() as { text: string };
+
+    if (!body.text || body.text.trim().length === 0) {
+      return { status: 400, jsonBody: { error: 'Comment text is required' } };
+    }
+
+    const { itemsContainer, commentsContainer } = await getContainers();
+
+    // Check item exists
+    const { resource: item } = await itemsContainer.item(itemId, itemId).read();
+    if (!item) {
+      return { status: 404, jsonBody: { error: 'Item not found' } };
+    }
+
+    const comment = {
+      id: uuidv4(),
+      itemId,
+      userId: user.userId,
+      userName: user.userDetails,
+      text: body.text.slice(0, 1000),
+      createdAt: new Date().toISOString()
+    };
+
+    await commentsContainer.items.create(comment);
+
+    // Update comment count
+    item.commentCount = (item.commentCount || 0) + 1;
+    await itemsContainer.item(itemId, itemId).replace(item);
+
+    return { status: 201, jsonBody: comment };
+  }
+});
+
+// DELETE /api/comments/{id} - Delete own comment
+app.http('deleteComment', {
+  methods: ['DELETE'],
+  authLevel: 'anonymous',
+  route: 'comments/{id}',
+  handler: async (request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> => {
+    const user = getUser(request);
+    if (!user) {
+      return { status: 401, jsonBody: { error: 'Unauthorized' } };
+    }
+
+    const commentId = request.params.id;
+    const { itemsContainer, commentsContainer } = await getContainers();
+
+    // Find comment (need to query since we don't know itemId)
+    const { resources: comments } = await commentsContainer.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.id = @id',
+        parameters: [{ name: '@id', value: commentId }]
+      })
+      .fetchAll();
+
+    const comment = comments[0];
+    if (!comment) {
+      return { status: 404, jsonBody: { error: 'Comment not found' } };
+    }
+    if (comment.userId !== user.userId) {
+      return { status: 403, jsonBody: { error: 'Not authorized to delete this comment' } };
+    }
+
+    // Delete comment
+    await commentsContainer.item(commentId, comment.itemId).delete();
+
+    // Update comment count
+    const { resource: item } = await itemsContainer.item(comment.itemId, comment.itemId).read();
+    if (item) {
+      item.commentCount = Math.max(0, (item.commentCount || 1) - 1);
+      await itemsContainer.item(comment.itemId, comment.itemId).replace(item);
+    }
+
+    return { status: 204 };
+  }
+});
